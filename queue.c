@@ -77,7 +77,7 @@ task_queue_add(struct task_queue *queue,
 	task->future = future;
 
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
-		fprintf(stderr, "Could not lock task queue: %s\n",
+		fprintf(stderr, "Error locking task queue (add): %s\n",
 							strerror(errcode));
 		return errcode;
 	} else {
@@ -107,7 +107,7 @@ task_queue_remove(struct task_queue *queue,
 	assert(func != NULL && taskarg != NULL);
 
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
-		fprintf(stderr, "Could not lock task queue: %s\n",
+		fprintf(stderr, "Error locking task queue (remove): %s\n",
 							strerror(errcode));
 		return errcode;
 	} else {
