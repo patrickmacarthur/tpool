@@ -201,22 +201,18 @@ tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
 		}
 		if ((errcode = task_queue_add(&tpool->queue, func, taskarg, flags, *pfuture))
 									!= 0) {
-			fprintf(stderr, "Adding task failed: %s\n",
-					strerror(errno));
 			return errcode;
 		}
 	} else {
 		if ((errcode = task_queue_add(&tpool->queue, func, taskarg, flags, NULL))
 									!= 0) {
-			fprintf(stderr, "Adding task failed: %s\n",
-					strerror(errno));
 			return errcode;
 		}
 	}
 
 	pthread_mutex_lock(&tpool->tp_mutex);
 	if (tpool->n_threads < tpool->pool_size) {
-		errcode = pthread_create(&threadid, NULL, &pool_worker, &tpool);
+		errcode = pthread_create(&threadid, NULL, &pool_worker, tpool);
 		if (errcode != 0 && tpool->n_threads == 0) {
 			return errcode;
 		} else {
