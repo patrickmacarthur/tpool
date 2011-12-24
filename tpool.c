@@ -52,30 +52,39 @@ struct tpool {
  * undefined.  This function may fail with EINVAL if an invalid value is given
  * for tpool, maxthreads, or flags. */
 int
-tpool_init(TPOOL *tpool, unsigned maxthreads, uint32_t flags)
+tpool_init(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp)
 {
+	TPOOL *tpool;
 	int errcode;
 
-	if (!tpool || !maxthreads) {
+	if (!tpoolp || !maxthreads || flags) {
 		errcode = EINVAL;
 		goto exit;
 	}
 
-	memset(tpool, 0, sizeof(*tpool));
+	if ((tpool = calloc(1, sizeof(*tpool))) == NULL) {
+		errcode = errno;
+		goto exit;
+	}
 	tpool->pool_size = maxthreads;
 	tpool->alive = 1;
 	tpool->flags = flags;
 	if ((errcode = task_queue_init(&tpool->queue)) != 0) {
-		goto exit;
+		goto fail0;
 	}
 	if ((errcode = pthread_mutex_init(&tpool->tp_mutex, NULL)) != 0) {
 		goto fail1;
 	}
 
 	errcode = 0;
+	*tpoolp = tpool;
 	goto exit;
 fail1:
+	assert(errcode != 0);
 	task_queue_destroy(&tpool->queue);
+fail0:
+	assert(errcode != 0);
+	free(tpool);
 exit:
 	return errcode;
 }

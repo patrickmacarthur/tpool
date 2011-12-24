@@ -6,6 +6,7 @@
 #ifndef TPOOL_H
 #define TPOOL_H
 
+#include <stdint.h>
 #include <unistd.h>
 
 #if !defined(_POSIX_VERSION) || _POSIX_VERSION < 200112L
@@ -20,6 +21,19 @@ typedef struct future FUTURE;
 
 /* Represents a thread pool. */
 typedef struct tpool TPOOL;
+
+int
+tpool_init(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp);
+
+int
+tpool_destroy(TPOOL *tpool);
+
+void
+tpool_shutdown(TPOOL *tpool);
+
+int
+tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
+							FUTURE **pfuture);
 
 void *
 future_get(FUTURE *future);
