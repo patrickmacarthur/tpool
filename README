@@ -1,0 +1,14 @@
+A simple (and as of yet incomplete) thread pool that can run many tasks.  The
+thread pool is dynamic but with a fixed maximum size specified at startup time.
+
+When initialized with tpool_init(), the thread pool will have 0 threads
+running.  When a task is added to the pool with tpool_submit(), the pool will
+spawn a thread for that task.  For subsequent tasks, if the pool has not
+reached its maximum size, it will spawn a new thread; otherwise, it will
+queue the task and an existing thread will take the task when it finishes a
+previous task.
+
+The thread pool may be shut down with tpool_shutdown(), in which case it will
+refuse any new tasks.  All running and queued tasks will run to completion.
+When they have run to completion, resources used by the thread pool can be
+freed with tpool_destroy().
