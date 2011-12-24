@@ -127,14 +127,15 @@ pool_worker(void *threadarg)
 	void *taskarg;
 	void *result;
 	int flags;
+	int errcode;
 	TPOOL *tpool;
 	FUTURE *future;
 	pthread_detach(pthread_self());
 	tpool = (TPOOL *)threadarg;
 
 	for (;;) {
-		if (task_queue_remove(&tpool->queue, &func, &taskarg, &flags,
-								&future) == 0) {
+		if ((errcode = task_queue_remove(&tpool->queue, &func, &taskarg, &flags,
+								&future)) == 0) {
 			if (func == NULL) {
 				pthread_mutex_lock(&tpool->tp_mutex);
 				--tpool->n_threads;
@@ -146,6 +147,11 @@ pool_worker(void *threadarg)
 			if (flags & TASK_WANT_FUTURE) {
 				future_set(future, result);
 			}
+		} else {
+			pthread_mutex_lock(&tpool->tp_mutex);
+			--tpool->n_threads;
+			pthread_mutex_unlock(&tpool->tp_mutex);
+			pthread_exit(NULL);
 		}
 	}
 
