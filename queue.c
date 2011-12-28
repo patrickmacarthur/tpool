@@ -70,35 +70,45 @@ exit:
  * are EINVAL if an argument is invalid or ENOMEM if a new task could not be
  * allocated. */
 int
-task_queue_add(struct task_queue *queue,
-		void *(*func)(void *), void *taskarg, int flags, FUTURE *future)
+task_queue_add(struct task_queue *queue, struct tpool_task *task,
+								FUTURE *future)
 {
-	struct tpool_task *task;
+	struct task_node *node;
+	struct tpool_task *copy;
 	int errcode;
-	assert(func != NULL);
-	if (flags & TASK_WANT_FUTURE) {
-		assert((flags & TASK_WANT_FUTURE) && future != NULL);
+	assert(task != NULL);
+	if (task->flags & TASK_WANT_FUTURE) {
+		assert((task->flags & TASK_WANT_FUTURE) && future != NULL);
 	}
 
-	if (!(task = calloc(1, sizeof(*task)))) {
+	if (!(node = calloc(1, sizeof(*node)))) {
 		return errno;
 	}
 
-	task->func = func;
-	task->taskarg = taskarg;
-	task->flags = flags;
-	task->future = future;
+	/* We need to take a copy of the user's structure since it might have
+	 * been allocated from stack memory. */
+	assert(sizeof(*task) == sizeof(*copy));
+	if (!(copy = malloc(sizeof(*copy)))) {
+		return errno;
+	}
+	memcpy(copy, task, sizeof(*copy));
+
+	/* Set up the node.  Fields have already been initialized to 0 at this
+	 * point. */
+	node->task = copy;
+	node->future = future;
 
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
 		fprintf(stderr, "Error locking task queue (add): %s\n",
 							strerror(errcode));
 		return errcode;
 	} else {
+		/* Add the node to the tail of the queue structure */
 		if (queue->q_head == NULL) {
-			queue->q_head = queue->q_tail = task;
+			queue->q_head = queue->q_tail = node;
 		} else {
-			queue->q_tail->next = task;
-			queue->q_tail = task;
+			queue->q_tail->next = node;
+			queue->q_tail = node;
 		}
 		pthread_mutex_unlock(&queue->q_mutex);
 		return 0;
@@ -111,13 +121,12 @@ task_queue_add(struct task_queue *queue,
  * message to stderr and returns an appropriate error code, leaving func and
  * taskarg undefined. */
 int
-task_queue_remove(struct task_queue *queue,
-			void *(**func)(void *), void **taskarg, int *flags,
+task_queue_remove(struct task_queue *queue, struct tpool_task **task,
 							FUTURE **pfuture)
 {
-	struct tpool_task *task;
+	struct task_node *node;
 	int errcode;
-	assert(func != NULL && taskarg != NULL);
+	assert(task != NULL && pfuture != NULL);
 
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
 		fprintf(stderr, "Error locking task queue (remove): %s\n",
@@ -125,21 +134,18 @@ task_queue_remove(struct task_queue *queue,
 		return errcode;
 	} else {
 		if (queue->q_head == NULL) {
-			task = NULL;
+			node = NULL;
 		} else {
-			task = queue->q_head;
-			queue->q_head = task->next;
+			node = queue->q_head;
+			queue->q_head = node->next;
 		}
 		pthread_mutex_unlock(&queue->q_mutex);
 
-		if (task != NULL) {
-			*func = task->func;
-			*taskarg = task->taskarg;
-			*flags = task->flags;
-			*pfuture = task->future;
+		if (node != NULL) {
+			*task = node->task;
+			*pfuture = node->future;
 		} else {
-			*func = NULL;
-			*taskarg = NULL;
+			*task = NULL;
 		}
 		return 0;
 	}

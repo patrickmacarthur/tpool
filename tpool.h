@@ -31,6 +31,14 @@ later version.
 
 #define TASK_WANT_FUTURE (1 << 0)
 
+/* Represents a unit of work in the thread pool. */
+struct tpool_task {
+	void *(*func)(void *);
+	void *arg;
+	int flags;
+};
+
+
 /* Represents a value that will be known at some point in the future. */
 typedef struct future FUTURE;
 
@@ -47,8 +55,7 @@ void
 tpool_shutdown(TPOOL *tpool);
 
 int
-tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
-							FUTURE **pfuture);
+tpool_submit(TPOOL *tpool, struct tpool_task *task, FUTURE **pfuture);
 
 void *
 future_get(FUTURE *future);
