@@ -123,10 +123,8 @@ exit:
 static void *
 pool_worker(void *threadarg)
 {
-	void *(*func)(void *);
-	void *taskarg;
+	struct tpool_task *task;
 	void *result;
-	int flags;
 	int errcode;
 	TPOOL *tpool;
 	FUTURE *future;
@@ -134,17 +132,17 @@ pool_worker(void *threadarg)
 	tpool = (TPOOL *)threadarg;
 
 	for (;;) {
-		if ((errcode = task_queue_remove(&tpool->queue, &func, &taskarg, &flags,
+		if ((errcode = task_queue_remove(&tpool->queue, &task,
 								&future)) == 0) {
-			if (func == NULL) {
+			if (task == NULL) {
 				pthread_mutex_lock(&tpool->tp_mutex);
 				--tpool->n_threads;
 				pthread_mutex_unlock(&tpool->tp_mutex);
 				pthread_exit(NULL);
 			}
 
-			result = func(taskarg);
-			if (flags & TASK_WANT_FUTURE) {
+			result = task->func(task->arg);
+			if (task->flags & TASK_WANT_FUTURE) {
 				future_set(future, result);
 			}
 		} else {
@@ -186,6 +184,7 @@ int
 tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
 							FUTURE **pfuture)
 {
+	struct tpool_task *task;
 	int errcode;
 	pthread_t threadid;
 
@@ -197,7 +196,13 @@ tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
 		return ECANCELED;
 	}
 
-	if (flags & TASK_WANT_FUTURE) {
+	if ((task = calloc(1, sizeof(*task))) == NULL) {
+		return errno;
+	}
+	task->func = func;
+	task->arg = taskarg;
+	task->flags = flags;
+	if (task->flags & TASK_WANT_FUTURE) {
 		if ((*pfuture = calloc(1, sizeof(**pfuture))) == NULL) {
 			return errno;
 		}
@@ -205,12 +210,12 @@ tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
 			free(*pfuture);
 			return errno;
 		}
-		if ((errcode = task_queue_add(&tpool->queue, func, taskarg, flags, *pfuture))
+		if ((errcode = task_queue_add(&tpool->queue, task, *pfuture))
 									!= 0) {
 			return errcode;
 		}
 	} else {
-		if ((errcode = task_queue_add(&tpool->queue, func, taskarg, flags, NULL))
+		if ((errcode = task_queue_add(&tpool->queue, task, NULL))
 									!= 0) {
 			return errcode;
 		}

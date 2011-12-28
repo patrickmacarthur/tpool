@@ -23,8 +23,8 @@ future_set(FUTURE *future, void *value);
  * add a task to the tail.  Worker threads will pull a task off of the
  * head when they become available. */
 struct task_queue {
-	struct tpool_task *q_head;
-	struct tpool_task *q_tail;
+	struct task_node  *q_head;
+	struct task_node  *q_tail;
 	pthread_mutex_t   q_mutex;
 };
 
@@ -35,21 +35,18 @@ int
 task_queue_destroy(struct task_queue *queue);
 
 int
-task_queue_add(struct task_queue *queue,
-				void *(*func)(void *), void *taskarg, int flags,
+task_queue_add(struct task_queue *queue, struct tpool_task *task,
 								FUTURE *future);
 
 int
-task_queue_remove(struct task_queue *queue,
-			void *(**func)(void *), void **taskarg, int *flags,
+task_queue_remove(struct task_queue *queue, struct tpool_task **task,
 							FUTURE **pfuture);
+
 /* Represents a unit of work in the thread pool. */
-struct tpool_task {
-	void *(*func)(void *);
-	void *taskarg;
+struct task_node {
+	struct tpool_task *task;
 	FUTURE *future;
-	int flags;
-	struct tpool_task *next;
+	struct task_node *next;
 };
 
 #endif
