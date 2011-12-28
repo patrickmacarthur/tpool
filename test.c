@@ -14,6 +14,8 @@
 
 #include "tpool.h"
 
+TPOOL	*tpool	= NULL;
+
 void *
 thread1(void *threadarg)
 {
@@ -32,11 +34,32 @@ thread2(void *threadarg)
 	return (void *)(2);
 }
 
+FUTURE *
+submit_task(void *(*func)(void *), void *arg, int flags)
+{
+	FUTURE *future;
+	struct tpool_task *task;
+	int errcode;
+
+	if ((task = malloc(sizeof(*task))) == NULL) {
+		return NULL;
+	}
+
+	task->func = func;
+	task->arg = arg;
+	task->flags = flags;
+	if ((errcode = tpool_submit(tpool, task, &future)) != 0) {
+		errno = errcode;
+		return NULL;
+	} else {
+		return future;
+	}
+}
+
 int
 main()
 {
 	int errcode;
-	TPOOL *tpool;
 	FUTURE *f1;
 	FUTURE *f2;
 	void *value;
@@ -44,11 +67,11 @@ main()
 	if ((errcode = tpool_init(2, UINT32_C(0), &tpool)) != 0) {
 		fprintf(stderr, "tpool_init: %s\n", strerror(errcode));
 	}
-	if ((errcode = tpool_submit(tpool, &thread1, NULL, TASK_WANT_FUTURE, &f1)) != 0) {
-		fprintf(stderr, "submit task 1: %s\n", strerror(errcode));
+	if ((f1 = submit_task(&thread1, NULL, TASK_WANT_FUTURE)) == NULL) {
+		fprintf(stderr, "submit task 1: %s\n", strerror(errno));
 	}
-	if ((errcode = tpool_submit(tpool, &thread2, NULL, TASK_WANT_FUTURE, &f2)) != 0) {
-		fprintf(stderr, "submit task 2: %s\n", strerror(errcode));
+	if ((f2 = submit_task(&thread2, NULL, TASK_WANT_FUTURE)) == NULL) {
+		fprintf(stderr, "submit task 2: %s\n", strerror(errno));
 	}
 	value = future_get(f1);
 	printf("Task 1 finished; returned value %p\n", value);

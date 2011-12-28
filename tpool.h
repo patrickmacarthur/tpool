@@ -55,8 +55,7 @@ void
 tpool_shutdown(TPOOL *tpool);
 
 int
-tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
-							FUTURE **pfuture);
+tpool_submit(TPOOL *tpool, struct tpool_task *task, FUTURE **pfuture);
 
 void *
 future_get(FUTURE *future);

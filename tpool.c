@@ -181,14 +181,14 @@ tpool_shutdown(TPOOL *tpool)
  *   ENOMEM: memory could not be allocated for the new task
  */
 int
-tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
-							FUTURE **pfuture)
+tpool_submit(TPOOL *tpool, struct tpool_task *task, FUTURE **pfuture)
 {
-	struct tpool_task *task;
 	int errcode;
 	pthread_t threadid;
 
-	if (func == NULL || ((flags & TASK_WANT_FUTURE) && pfuture == NULL)) {
+	if (task == NULL || task->func == NULL
+			|| ((task->flags & TASK_WANT_FUTURE)
+							&& pfuture == NULL)) {
 		return EINVAL;
 	}
 
@@ -196,12 +196,6 @@ tpool_submit(TPOOL *tpool, void *(*func)(void *), void *taskarg, int flags,
 		return ECANCELED;
 	}
 
-	if ((task = calloc(1, sizeof(*task))) == NULL) {
-		return errno;
-	}
-	task->func = func;
-	task->arg = taskarg;
-	task->flags = flags;
 	if (task->flags & TASK_WANT_FUTURE) {
 		if ((*pfuture = calloc(1, sizeof(**pfuture))) == NULL) {
 			return errno;
