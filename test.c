@@ -6,6 +6,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -16,33 +17,39 @@
 
 TPOOL	*tpool	= NULL;
 
-void *
-thread1(void *threadarg)
+struct param
 {
-	(void)threadarg;
-	printf("This is thread 1\n");
-	fflush(stdout);
-	return (void *)(1);
-}
+	unsigned taskno;
+	bool have_future;
+};
 
 void *
-thread2(void *threadarg)
+test_task(void *arg)
 {
-	(void)threadarg;
-	printf("This is thread 2\n");
+	struct param *p = (struct param *)arg;
+	printf("This is thread %u%s\n", p->taskno,
+			p->have_future ? "" : " (no future)");
 	fflush(stdout);
-	return (void *)(2);
+	return (void *)(uintptr_t)(p->taskno);
 }
 
 FUTURE *
-submit_task(void *(*func)(void *), void *arg, int flags)
+submit_task(void *(*func)(void *), int flags)
 {
+	static unsigned taskno_next = 1;
 	FUTURE *future;
 	struct tpool_task task;
+	struct param *params;
 	int errcode;
 
+	if ((params = malloc(sizeof(*params))) == NULL) {
+		return NULL;
+	}
+	params->taskno = taskno_next++;
+	params->have_future = flags & TASK_WANT_FUTURE;
+
 	task.func = func;
-	task.arg = arg;
+	task.arg = (void *)params;
 	task.flags = flags;
 	if ((errcode = tpool_submit(tpool, &task, &future)) != 0) {
 		errno = errcode;
@@ -63,11 +70,16 @@ main()
 	if ((errcode = tpool_init(2, UINT32_C(0), &tpool)) != 0) {
 		fprintf(stderr, "tpool_init: %s\n", strerror(errcode));
 	}
-	if ((f1 = submit_task(&thread1, NULL, TASK_WANT_FUTURE)) == NULL) {
-		fprintf(stderr, "submit task 1: %s\n", strerror(errno));
+	if ((f1 = submit_task(&test_task, TASK_WANT_FUTURE)) == NULL) {
+		fprintf(stderr, "submit task: %s\n", strerror(errno));
 	}
-	if ((f2 = submit_task(&thread2, NULL, TASK_WANT_FUTURE)) == NULL) {
-		fprintf(stderr, "submit task 2: %s\n", strerror(errno));
+	if ((f2 = submit_task(&test_task, TASK_WANT_FUTURE)) == NULL) {
+		fprintf(stderr, "submit task: %s\n", strerror(errno));
+	}
+	errno = 0;
+	submit_task(&test_task, UINT32_C(0));
+	if (errno != 0) {
+		fprintf(stderr, "submit task: %s\n", strerror(errno));
 	}
 	value = future_get(f1);
 	printf("Task 1 finished; returned value %p\n", value);
@@ -78,9 +90,12 @@ main()
 	fflush(stdout);
 	future_destroy(f2);
 	tpool_shutdown(tpool);
-	tpool_destroy(tpool);
+	if (tpool_destroy(tpool) == 0) {
+		printf("Thread pool destroyed\n");
+	}
 
-	return 0;
+	pthread_exit(NULL);
+	return 0; /* should never reach this */
 }
 
 /* vim: set shiftwidth=8 tabstop=8 noexpandtab : */
