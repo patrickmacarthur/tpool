@@ -1,5 +1,8 @@
-A simple (and as of yet incomplete) thread pool that can run many tasks.  The
-thread pool is dynamic but with a fixed maximum size specified at startup time.
+tpool is a simple thread pool library built on top of POSIX threads.
+When a task is submitted to the thread pool, the library will spawn a thread
+to run the task and/or queue the task for later execution.  The number of
+threads in the thread pool is dynamic but the user specifies a fixed maximum
+size at startup time.
 
 When initialized with tpool_init(), the thread pool will have 0 threads
 running.  When a task is added to the pool with tpool_submit(), the pool will
@@ -8,7 +11,16 @@ reached its maximum size, it will spawn a new thread; otherwise, it will
 queue the task and an existing thread will take the task when it finishes a
 previous task.
 
+When a task is submitted with tpool_submit(), a pointer to a FUTURE may be
+provided.  Its value will not be available until the task finishes.  The value
+may be obtained via future_get(), which may block until the value is available.
+After the value has been obtained, the future should be destroyed with
+future_destroy().
+
 The thread pool may be shut down with tpool_shutdown(), in which case it will
 refuse any new tasks.  All running and queued tasks will run to completion.
 When they have run to completion, resources used by the thread pool can be
 freed with tpool_destroy().
+
+tpool is currently maintained by:
+Patrick MacArthur <generalpenguin89@gmail.com>

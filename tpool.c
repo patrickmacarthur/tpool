@@ -1,21 +1,21 @@
-/* tpool.c
+/* tpool.c - a simple thread pool library built on POSIX threads
  *
- * Patrick MacArthur <generalpenguin89@gmail.com>
+ * Copyright (c) 2011 Patrick MacArthur
  *
- * A simple thread pool that can run many tasks.  The thread pool is dynamic
- * dynamic but with a fixed maximum size specified at startup time.
+ * This file is part of tpool.
  *
- * When initialized with tpool_init(), the thread pool will have 0 threads
- * running.  When a task is added to the pool with tpool_submit(), the pool will
- * spawn a thread for that task.  For subsequent tasks, if the pool has not
- * reached its maximum size, it will spawn a new thread; otherwise, it will
- * queue the task and an existing thread will take the task when it finishes a
- * previous task.
+ * tpool is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * The thread pool may be shut down with tpool_shutdown(), in which case it will
- * refuse any new tasks.  All running and queued tasks will run to completion.
- * When they have run to completion, resources used by the thread pool can be
- * freed with tpool_destroy().
+ * tpool is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with tpool.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #define _POSIX_C_SOURCE 200809L
