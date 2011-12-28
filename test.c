@@ -34,6 +34,15 @@ thread2(void *threadarg)
 	return (void *)(2);
 }
 
+void *
+thread3(void *threadarg)
+{
+	(void)threadarg;
+	printf("This is thread 3\n");
+	fflush(stdout);
+	return (void *)(3);
+}
+
 FUTURE *
 submit_task(void *(*func)(void *), void *arg, int flags)
 {
@@ -69,6 +78,11 @@ main()
 	if ((f2 = submit_task(&thread2, NULL, TASK_WANT_FUTURE)) == NULL) {
 		fprintf(stderr, "submit task 2: %s\n", strerror(errno));
 	}
+	errno = 0;
+	submit_task(&thread3, NULL, 0);
+	if (errno != 0) {
+		fprintf(stderr, "submit task 3: %s\n", strerror(errno));
+	}
 	value = future_get(f1);
 	printf("Task 1 finished; returned value %p\n", value);
 	fflush(stdout);
@@ -79,6 +93,7 @@ main()
 	future_destroy(f2);
 	tpool_shutdown(tpool);
 	tpool_destroy(tpool);
+	printf("Thread pool destroyed\n");
 
 	return 0;
 }
