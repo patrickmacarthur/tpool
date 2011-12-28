@@ -38,17 +38,13 @@ FUTURE *
 submit_task(void *(*func)(void *), void *arg, int flags)
 {
 	FUTURE *future;
-	struct tpool_task *task;
+	struct tpool_task task;
 	int errcode;
 
-	if ((task = malloc(sizeof(*task))) == NULL) {
-		return NULL;
-	}
-
-	task->func = func;
-	task->arg = arg;
-	task->flags = flags;
-	if ((errcode = tpool_submit(tpool, task, &future)) != 0) {
+	task.func = func;
+	task.arg = arg;
+	task.flags = flags;
+	if ((errcode = tpool_submit(tpool, &task, &future)) != 0) {
 		errno = errcode;
 		return NULL;
 	} else {

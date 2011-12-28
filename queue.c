@@ -74,6 +74,7 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 								FUTURE *future)
 {
 	struct task_node *node;
+	struct tpool_task *copy;
 	int errcode;
 	assert(task != NULL);
 	if (task->flags & TASK_WANT_FUTURE) {
@@ -84,7 +85,17 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 		return errno;
 	}
 
-	node->task = task;
+	/* We need to take a copy of the user's structure since it might have
+	 * been allocated from stack memory. */
+	assert(sizeof(*task) == sizeof(*copy));
+	if (!(copy = malloc(sizeof(*copy)))) {
+		return errno;
+	}
+	memcpy(copy, task, sizeof(*copy));
+
+	/* Set up the node.  Fields have already been initialized to 0 at this
+	 * point. */
+	node->task = copy;
 	node->future = future;
 
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
@@ -92,6 +103,7 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 							strerror(errcode));
 		return errcode;
 	} else {
+		/* Add the node to the tail of the queue structure */
 		if (queue->q_head == NULL) {
 			queue->q_head = queue->q_tail = node;
 		} else {
