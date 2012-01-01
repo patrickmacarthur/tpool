@@ -70,10 +70,12 @@ future_set(FUTURE *future, void *value)
 }
 
 /* Returns a future value.  Returns NULL if there was an error; otherwise
- * returns the value held within the future.  Note that this function will block
- * until the value is ready. */
+ * returns the value held within the future.  If TPOOL_WAIT is set in flags,
+ * this function will block until the value is ready.  If TPOOL_WAIT is not set
+ * in flags, this function will return NULL and set errno to EAGAIN if the value
+ * is not ready. */
 void *
-future_get(FUTURE *future)
+future_get(FUTURE *future, int flags)
 {
 	void *retval;
 	int errcode;
@@ -82,6 +84,16 @@ future_get(FUTURE *future)
 		errno = errcode;
 		return NULL;
 	}
+
+	/* If we don't have the future value, don't block unless TPOOL_WAIT is
+	 * set in flags. */
+	if (!(flags & TPOOL_WAIT) && !future->f_ready) {
+		pthread_mutex_unlock(&future->f_mutex);
+		errno = EAGAIN;
+		return NULL;
+	}
+
+	/* We either have the future value or TPOOL_WAIT is set in flags. */
 	while (!future->f_ready) {
 		pthread_cond_wait(&future->f_cond, &future->f_mutex);
 	}

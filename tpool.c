@@ -38,6 +38,9 @@ struct tpool {
 	struct task_queue       queue;
 	pthread_mutex_t         tp_mutex;
 
+	/* this is broadcast when the last thread exits the thread pool. */
+	pthread_cond_t          tp_cond_empty;
+
 	/* The set of threads in the pool. */
 	unsigned                pool_size;
 	unsigned                n_threads;
@@ -75,10 +78,16 @@ tpool_init(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp)
 	if ((errcode = pthread_mutex_init(&tpool->tp_mutex, NULL)) != 0) {
 		goto fail1;
 	}
+	if ((errcode = pthread_cond_init(&tpool->tp_cond_empty, NULL)) != 0) {
+		goto fail2;
+	}
 
 	errcode = 0;
 	*tpoolp = tpool;
 	goto exit;
+fail2:
+	assert(errcode != 0);
+	pthread_mutex_destroy(&tpool->tp_mutex);
 fail1:
 	assert(errcode != 0);
 	task_queue_destroy(&tpool->queue);
@@ -119,6 +128,7 @@ tpool_destroy(TPOOL *tpool)
 
 	pthread_mutex_unlock(&tpool->tp_mutex);
 	pthread_mutex_destroy(&tpool->tp_mutex);
+	pthread_cond_destroy(&tpool->tp_cond_empty);
 
 	retval = 0;
 	goto exit;
@@ -149,10 +159,7 @@ pool_worker(void *threadarg)
 		if ((errcode = task_queue_remove(&tpool->queue, &task,
 								&future)) == 0) {
 			if (task == NULL) {
-				pthread_mutex_lock(&tpool->tp_mutex);
-				--tpool->n_threads;
-				pthread_mutex_unlock(&tpool->tp_mutex);
-				pthread_exit(NULL);
+				goto exit;
 			}
 
 			result = task->func(task->arg);
@@ -160,25 +167,49 @@ pool_worker(void *threadarg)
 				future_set(future, result);
 			}
 		} else {
-			pthread_mutex_lock(&tpool->tp_mutex);
-			--tpool->n_threads;
-			pthread_mutex_unlock(&tpool->tp_mutex);
-			pthread_exit(NULL);
+			goto exit;
 		}
 	}
 
+	assert(0); /* should never reach here */
+	return NULL;
+
+exit:
+	{
+		int newnthreads;
+
+		pthread_mutex_lock(&tpool->tp_mutex);
+		newnthreads = --tpool->n_threads;
+		pthread_mutex_unlock(&tpool->tp_mutex);
+
+		if (newnthreads == 0) {
+			pthread_cond_broadcast(&tpool->tp_cond_empty);
+		}
+
+		pthread_exit(NULL);
+	}
+
+	assert(0); /* should never reach here */
 	return NULL;
 }
 
 /* This functions shuts down the thread pool gracefully.  After calling this
  * function, new tasks will be rejected, but all threads currently executing and
  * in the queue will continue.  When the queue is empty, each of the threads in
- * the pool will exit. */
+ * the pool will exit.  If TPOOL_WAIT is set in flags, then, after disallowing
+ * any new tasks, this function will block until all threads in the thread pool
+ * exit. */
 void
-tpool_shutdown(TPOOL *tpool)
+tpool_shutdown(TPOOL *tpool, int flags)
 {
 	pthread_mutex_lock(&tpool->tp_mutex);
 	tpool->alive = 0;
+	if (flags & TPOOL_WAIT) {
+		while (tpool->n_threads > 0 || tpool->queue.q_head) {
+			pthread_cond_wait(&tpool->tp_cond_empty,
+							&tpool->tp_mutex);
+		}
+	}
 	pthread_mutex_unlock(&tpool->tp_mutex);
 }
 

@@ -29,7 +29,10 @@
 later version.
 #endif
 
-#define TASK_WANT_FUTURE (1 << 0)
+enum tpool_flags {
+	TPOOL_WAIT = (1 << 0),
+	TASK_WANT_FUTURE = (1 << 8),
+};
 
 /* Represents a unit of work in the thread pool. */
 struct tpool_task {
@@ -52,13 +55,13 @@ int
 tpool_destroy(TPOOL *tpool);
 
 void
-tpool_shutdown(TPOOL *tpool);
+tpool_shutdown(TPOOL *tpool, int flags);
 
 int
 tpool_submit(TPOOL *tpool, struct tpool_task *task, FUTURE **pfuture);
 
 void *
-future_get(FUTURE *future);
+future_get(FUTURE *future, int flags);
 
 int
 future_destroy(FUTURE *future);
