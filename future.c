@@ -21,6 +21,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
+#include <assert.h>
 #include <pthread.h>
 #include <errno.h>
 
@@ -100,20 +101,29 @@ future_destroy(FUTURE *future)
 {
 	int errcode;
 	int retval;
+
 	pthread_mutex_lock(&future->f_mutex);
 	if (!future->f_ready) {
-		return EBUSY;
+		retval = EBUSY;
+		goto fail1;
 	}
 
 	retval = 0;
 	if ((errcode = pthread_cond_destroy(&future->f_cond)) != 0) {
 		retval = errcode;
 	}
+	pthread_mutex_unlock(&future->f_mutex);
 	if ((errcode = pthread_mutex_destroy(&future->f_mutex)) != 0) {
 		retval = errcode;
 	}
 	free(future);
+	goto exit;
 
+fail1:
+	assert(retval != 0);
+	pthread_mutex_unlock(&future->f_mutex);
+
+exit:
 	return retval;
 }
 
