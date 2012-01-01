@@ -100,20 +100,30 @@ int
 tpool_destroy(TPOOL *tpool)
 {
 	int errcode;
+	int retval;
 
 	if (!tpool) {
-		errcode = EINVAL;
+		retval = EINVAL;
 		goto exit;
 	}
 
+	pthread_mutex_lock(&tpool->tp_mutex);
 	if (tpool->alive || tpool->n_threads || tpool->queue.q_head) {
-		errcode = EBUSY;
-		goto exit;
+		retval = EBUSY;
+		goto fail1;
 	}
 
-	errcode = 0;
+	pthread_mutex_unlock(&tpool->tp_mutex);
+	pthread_mutex_destroy(&tpool->tp_mutex);
+
+	retval = 0;
+	goto exit;
+
+fail1:
+	pthread_mutex_unlock(&tpool->tp_mutex);
+
 exit:
-	return errcode;
+	return retval;
 }
 
 
