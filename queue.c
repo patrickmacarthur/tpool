@@ -56,9 +56,7 @@ task_queue_destroy(struct task_queue *queue)
 		errcode = EBUSY;
 		goto exit;
 	}
-	if ((errcode = pthread_mutex_destroy(&queue->q_mutex)) != 0) {
-		goto exit;
-	}
+	pthread_mutex_destroy(&queue->q_mutex);
 
 	errcode = 0;
 exit:
