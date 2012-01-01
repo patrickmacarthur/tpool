@@ -18,7 +18,7 @@ queue.o: tpool.h tpool_private.h
 future.o: tpool.h tpool_private.h
 
 LIBS=-lpthread -L. -ltpool
-test: test.o
+test: test.o tpool.h
 	$(CC) $(LIBS) -o $@ $^
 
 .PHONY: clean
