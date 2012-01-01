@@ -81,15 +81,15 @@ main()
 	if (errno != 0) {
 		fprintf(stderr, "submit task: %s\n", strerror(errno));
 	}
-	value = future_get(f1);
+	value = future_get(f1, TPOOL_WAIT);
 	printf("Task 1 finished; returned value %p\n", value);
 	fflush(stdout);
 	future_destroy(f1);
-	value = future_get(f2);
+	value = future_get(f2, TPOOL_WAIT);
 	printf("Task 2 finished; returned value %p\n", value);
 	fflush(stdout);
 	future_destroy(f2);
-	tpool_shutdown(tpool);
+	tpool_shutdown(tpool, TPOOL_WAIT);
 	if (tpool_destroy(tpool) == 0) {
 		printf("Thread pool destroyed\n");
 	}
