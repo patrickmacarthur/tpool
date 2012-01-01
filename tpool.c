@@ -112,6 +112,10 @@ tpool_destroy(TPOOL *tpool)
 		retval = EBUSY;
 		goto fail1;
 	}
+	if ((errcode = task_queue_destroy(&tpool->queue)) != 0) {
+		retval = errcode;
+		assert(errcode != EBUSY);
+	}
 
 	pthread_mutex_unlock(&tpool->tp_mutex);
 	pthread_mutex_destroy(&tpool->tp_mutex);
