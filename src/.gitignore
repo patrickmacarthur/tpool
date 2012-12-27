@@ -1,0 +1,6 @@
+.dirstamp
+.deps/
+.libs/
+*.la
+*.lo
+test-libtpool

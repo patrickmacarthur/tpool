@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include "tpool.h"
-#include "tpool_private.h"
+#include "tpool-private.h"
 
 /* Initializes a future, assuming that it has already been allocated.  Only
  * meant to be called internally.  External applications should get a future

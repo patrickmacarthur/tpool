@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "tpool.h"
-#include "tpool_private.h"
+#include "tpool-private.h"
 
 int
 task_queue_init(struct task_queue *queue)

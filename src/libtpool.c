@@ -1,6 +1,6 @@
-/* tpool.c - a simple thread pool library built on POSIX threads
+/* libtpool.c - a simple thread pool library built on POSIX threads
  *
- * Copyright (c) 2011 Patrick MacArthur
+ * Copyright (c) 2011, 2012 Patrick MacArthur
  *
  * This file is part of tpool.
  *
@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 #include "tpool.h"
-#include "tpool_private.h"
+#include "tpool-private.h"
 
 /* A thread pool. */
 struct tpool {
