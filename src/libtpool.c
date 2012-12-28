@@ -55,7 +55,7 @@ struct tpool {
  * undefined.  This function may fail with EINVAL if an invalid value is given
  * for tpool, maxthreads, or flags. */
 int
-tpool_init(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp)
+tpool_new(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp)
 {
 	TPOOL *tpool;
 	int errcode;
@@ -106,7 +106,7 @@ exit:
  * function will fail with EBUSY if the thread pool has not been shut down, if
  * any thread in the thread pool is busy, or if there are any queued tasks. */
 int
-tpool_destroy(TPOOL *tpool)
+tpool_free(TPOOL *tpool)
 {
 	int errcode;
 	int retval;

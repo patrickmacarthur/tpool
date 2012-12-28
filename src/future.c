@@ -109,7 +109,7 @@ future_get(FUTURE *future, int flags)
  * to use it again.  On success, returns 0.  On failure, returns the error code.
  * Will return EBUSY if the future value is not yet ready. */
 int
-future_destroy(FUTURE *future)
+future_free(FUTURE *future)
 {
 	int errcode;
 	int retval;

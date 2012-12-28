@@ -49,10 +49,10 @@ typedef struct future FUTURE;
 typedef struct tpool TPOOL;
 
 int
-tpool_init(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp);
+tpool_new(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp);
 
 int
-tpool_destroy(TPOOL *tpool);
+tpool_free(TPOOL *tpool);
 
 void
 tpool_shutdown(TPOOL *tpool, int flags);
@@ -64,7 +64,7 @@ void *
 future_get(FUTURE *future, int flags);
 
 int
-future_destroy(FUTURE *future);
+future_free(FUTURE *future);
 
 #endif
 /* vim: set shiftwidth=8 tabstop=8 noexpandtab : */

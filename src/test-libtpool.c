@@ -67,7 +67,7 @@ main()
 	FUTURE *f2;
 	void *value;
 
-	if ((errcode = tpool_init(2, UINT32_C(0), &tpool)) != 0) {
+	if ((errcode = tpool_new(2, UINT32_C(0), &tpool)) != 0) {
 		fprintf(stderr, "tpool_init: %s\n", strerror(errcode));
 	}
 	if ((f1 = submit_task(&test_task, TASK_WANT_FUTURE)) == NULL) {
@@ -84,13 +84,13 @@ main()
 	value = future_get(f1, TPOOL_WAIT);
 	printf("Task 1 finished; returned value %p\n", value);
 	fflush(stdout);
-	future_destroy(f1);
+	future_free(f1);
 	value = future_get(f2, TPOOL_WAIT);
 	printf("Task 2 finished; returned value %p\n", value);
 	fflush(stdout);
-	future_destroy(f2);
+	future_free(f2);
 	tpool_shutdown(tpool, TPOOL_WAIT);
-	if (tpool_destroy(tpool) == 0) {
+	if (tpool_free(tpool) == 0) {
 		printf("Thread pool destroyed\n");
 	}
 
