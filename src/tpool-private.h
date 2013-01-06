@@ -6,6 +6,8 @@
 #ifndef TPOOL_PRIVATE_H
 #define TPOOL_PRIVATE_H
 
+#define TPOOL_EXPORT __attribute__ ((visibility("default")))
+
 struct future {
 	int             f_ready;
 	void            *f_value;

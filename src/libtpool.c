@@ -54,7 +54,7 @@ struct tpool {
  * on error, it returns a nonzero error number, and the contents of *tpool are
  * undefined.  This function may fail with EINVAL if an invalid value is given
  * for tpool, maxthreads, or flags. */
-int
+TPOOL_EXPORT int
 tpool_new(unsigned maxthreads, uint32_t flags, TPOOL **tpoolp)
 {
 	TPOOL *tpool;
@@ -105,7 +105,7 @@ exit:
  * may fail with EINVAL if the value specified by tpool is invalid.  This
  * function will fail with EBUSY if the thread pool has not been shut down, if
  * any thread in the thread pool is busy, or if there are any queued tasks. */
-int
+TPOOL_EXPORT int
 tpool_free(TPOOL *tpool)
 {
 	int errcode;
@@ -199,7 +199,7 @@ exit:
  * the pool will exit.  If TPOOL_WAIT is set in flags, then, after disallowing
  * any new tasks, this function will block until all threads in the thread pool
  * exit. */
-void
+TPOOL_EXPORT void
 tpool_shutdown(TPOOL *tpool, int flags)
 {
 	pthread_mutex_lock(&tpool->tp_mutex);
@@ -225,7 +225,7 @@ tpool_shutdown(TPOOL *tpool, int flags)
  *   EINVAL: the passed-in task func is NULL
  *   ENOMEM: memory could not be allocated for the new task
  */
-int
+TPOOL_EXPORT int
 tpool_submit(TPOOL *tpool, struct tpool_task *task, FUTURE **pfuture)
 {
 	int errcode;

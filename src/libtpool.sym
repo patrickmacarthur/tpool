@@ -1,0 +1,11 @@
+LIBTPOOL_1_0 {
+global:
+	tpool_new;
+	tpool_free;
+	tpool_shutdown;
+	tpool_submit;
+	future_get;
+	future_free;
+local:
+	*;
+};

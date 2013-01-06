@@ -74,7 +74,7 @@ future_set(FUTURE *future, void *value)
  * this function will block until the value is ready.  If TPOOL_WAIT is not set
  * in flags, this function will return NULL and set errno to EAGAIN if the value
  * is not ready. */
-void *
+TPOOL_EXPORT void *
 future_get(FUTURE *future, int flags)
 {
 	void *retval;
@@ -108,7 +108,7 @@ future_get(FUTURE *future, int flags)
  * has been retrieved.  After destroying the future, no attempt should be made
  * to use it again.  On success, returns 0.  On failure, returns the error code.
  * Will return EBUSY if the future value is not yet ready. */
-int
+TPOOL_EXPORT int
 future_free(FUTURE *future)
 {
 	int errcode;
