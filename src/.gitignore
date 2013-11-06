@@ -4,3 +4,5 @@
 *.la
 *.lo
 test-libtpool
+test-libtpool.log
+*.trs
