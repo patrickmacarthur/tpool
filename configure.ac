@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.60])
-AC_INIT([tpool], [1.0], [generalpenguin89@gmail.com])
+AC_INIT([tpool], [0.2], [generalpenguin89@gmail.com])
 AC_CONFIG_SRCDIR([src/libtpool.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules subdir-objects])
@@ -22,7 +22,7 @@ AS_CASE([$host],
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread], [], [AC_MSG_ERROR([dnl
-"POSIX threads support is required for EXS library"])])
+"POSIX threads support is required for tpool library"])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h unistd.h])
