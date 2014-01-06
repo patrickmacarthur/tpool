@@ -73,21 +73,24 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 {
 	struct task_node *node;
 	struct tpool_task *copy;
-	int errcode;
+	int errcode, ret;
+
 	assert(task != NULL);
 	if (task->flags & TASK_WANT_FUTURE) {
 		assert((task->flags & TASK_WANT_FUTURE) && future != NULL);
 	}
 
 	if (!(node = calloc(1, sizeof(*node)))) {
-		return errno;
+		ret = errno;
+		goto out;
 	}
 
 	/* We need to take a copy of the user's structure since it might have
 	 * been allocated from stack memory. */
 	assert(sizeof(*task) == sizeof(*copy));
 	if (!(copy = malloc(sizeof(*copy)))) {
-		return errno;
+		ret = errno;
+		goto err1;
 	}
 	memcpy(copy, task, sizeof(*copy));
 
@@ -99,7 +102,7 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 	if ((errcode = pthread_mutex_lock(&queue->q_mutex)) != 0) {
 		fprintf(stderr, "Error locking task queue (add): %s\n",
 							strerror(errcode));
-		return errcode;
+		ret = errcode;
 	} else {
 		/* Add the node to the tail of the queue structure */
 		if (queue->q_head == NULL) {
@@ -109,8 +112,16 @@ task_queue_add(struct task_queue *queue, struct tpool_task *task,
 			queue->q_tail = node;
 		}
 		pthread_mutex_unlock(&queue->q_mutex);
-		return 0;
+		ret = 0;
 	}
+
+	goto out;
+
+err1:
+	free(node);
+
+out:
+	return ret;
 }
 
 /* Removes a task from the head of the queue.  Returns 0 on if there is no
