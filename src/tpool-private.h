@@ -1,6 +1,6 @@
 /* tpool_private.h
  *
- * Patrick MacArthur <generalpenguin89@gmail.com>
+ * Patrick MacArthur <contact@patrickmacarthur.net>
  */
 
 #ifndef TPOOL_PRIVATE_H
