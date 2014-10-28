@@ -23,4 +23,4 @@ When they have run to completion, resources used by the thread pool can be
 freed with tpool_destroy().
 
 tpool is currently maintained by:
-Patrick MacArthur <generalpenguin89@gmail.com>
+Patrick MacArthur <contact@patrickmacarthur.net>
