@@ -12,10 +12,6 @@ fi
 
 autoreconf --install --symlink
 
-libdir() {
-        echo $(cd $1/$(gcc -print-multi-os-directory); pwd)
-}
-
 args=
 
 echo
